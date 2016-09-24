@@ -77,8 +77,9 @@ app.get('/ratecomment', function (req, res) {
 	  //There are more comments. Get them!
 	//  console.log(resolve.data);
 	  if(resolve.data.paging && resolve.data.paging.cursors.next){
-	  	console.log('new comment');
-	  		res.redirect('/getcomment?post_id=' + result.data[0].id + '&comment_offset=' + req.query.comment_offset+1);
+		  	harvest.getPostsForGroup(false, req.query.post_offset+1).then(function(result){
+	  				res.redirect('/getcomment?post_id=' + req.query.post_id + '&comment_id=' + result.data[0].id);
+	  		});
 	  }
 	  else{
 	  	console.log('new post');

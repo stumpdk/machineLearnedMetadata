@@ -1,0 +1,15 @@
+html
+  head
+    title= title
+  body
+    h1= "Vurdering af metadata"
+    p Post:
+    p Beskrivelse: #{message}
+    a(href=link)
+        img(src=imgSrc)
+    p
+    p Kommentar: #{comment}
+    p Machinelearners forslag: #{suggestion}
+    p
+    a(href=relevant) relevant
+    a(href=irrelevant) irrelevant
