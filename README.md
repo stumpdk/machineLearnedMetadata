@@ -9,4 +9,4 @@ This projects aims to harvest relevant metadata from the comments in two steps:
 
 2. Get metadata from the relevant posts
 
-More info here: 
+More info here: https://docs.google.com/spreadsheets/d/1hz2HfQDN5KEtA7JY8RS5Qj6B4zfkIbAHtWAjRi8YPPY/
