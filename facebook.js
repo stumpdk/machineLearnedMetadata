@@ -1,71 +1,116 @@
-var FB = require('fb');
+	var FB = require('fb');
+    var FBharvest = function () {};
 
-var harvestOptions = {
-    groupid: "109602915873899",	
-	groupName: "Gamle København",
-	numberOfRecords: 10,
-	appId: '1136850856375164',
-	appSecret: '0be50668a856a0eafec60f1babc2fb66'
-};
+	//Private methods
+	var harvestOptions = {
+	    groupid: "109602915873899",	
+		groupName: "Gamle København",
+		numberOfRecords: 1,
+		appId: '1136850856375164',
+		appSecret: '0be50668a856a0eafec60f1babc2fb66'
+	};
 
-var requestAccessToken = function(harvestOptions)
-{
-	var newPromise = new Promise(function(resolve, reject){
-			FB.api('oauth/access_token', {
-		    client_id: harvestOptions.appId,
-		    client_secret: harvestOptions.appSecret,
-		    grant_type: 'client_credentials'
-		}, function (res) {
-		    if(!res || res.error) {
-		        console.log(!res ? 'error occurred' : res.error);
-		        reject();
-		        return;
-		    }
-		    else{
-		    	resolve(res);
-		    }
+	var accessToken = null;
+
+	var requestAccessToken = function(harvestOptions){
+		var promise = new Promise(function(resolve, reject){
+				if(accessToken){
+					resolve(accessToken);
+				}
+
+				FB.api('oauth/access_token', {
+			    client_id: harvestOptions.appId,
+			    client_secret: harvestOptions.appSecret,
+			    grant_type: 'client_credentials'
+				}, function (res) {
+				    if(!res || res.error) {
+				        console.log(!res ? 'error occurred' : res.error);
+				        reject();
+				        return;
+				    }
+				    else{
+				    	accessToken = res;
+	    				FB.setAccessToken(res.access_token);
+				    	resolve(res);
+				    }
+			});
+		});	
+
+		return promise;
+	};
+
+	var getGroupFeedFromGroup = function (offset)
+	{
+		var url = '/' + harvestOptions.groupid + '/feed?fields=id,message,link,created_time,picture,object_id&limit=1&offset=' + offset;
+
+		return getFBData(url);
+	};
+
+	var getFBData = function(url){
+		return requestAccessToken(harvestOptions).then(function(){
+			promise = new Promise(function(resolve, reject){
+				FB.api(url, function (res) {
+				    if(res && res.error) {
+				        if(res.error.code === 'ETIMEDOUT') {
+				            console.log('request timeout');
+				            reject(res.error);
+				        }
+				        else {
+				            console.log('error getting data from fb: ' + res.error.message, url);
+				            reject(res.error);
+				        }
+				    }
+				    else {
+				    	console.log('got data from fb');
+				        resolve(res);
+				    }
+				});
+			});
+
+			return promise;	
 		});
-	});	
+	};
 
-	return newPromise;
-}
+	FBharvest.prototype.getCommentsForPost = function(postId, offset)
+	{
+		var url = '/' + postId + '/comments';
 
-var harvestPost = function (harvestOptions)
-{
-	FB.api('/' + harvestOptions.groupid + '/feed?fields=id,message,link,created_time,picture,object_id&limit=' + harvestOptions.numberOfRecords, function (res) {
-	    if(res && res.error) {
-	        if(res.error.code === 'ETIMEDOUT') {
-	            console.log('request timeout');
-	        }
-	        else {
-	            console.log('error', res.error);
-	        }
-	    }
-	    else {
-	    	console.log('Got data from feed');
-	        console.log(res);
-	    }
-	});
-};
+		if(offset)
+		{
+			url = url + '?limit=1&offset=' + offset;
+		}
 
-var harvestComments = function( commentId ) {
-	FB.api('/' + commentId + '/comments?summary=true&limit=1000&order=chronological', function (res) {
-	    if(res && res.error) {
-	        if(res.error.code === 'ETIMEDOUT') {
-	            console.log('request timeout');
-	        }
-	        else {
-	            console.log('error', res.error);
-	        }
-	    }
-	    else {
-	    	console.log('Got data from comment');
-	        console.log(res);
-	    }
-	});
-};
+		return getFBData(url);
+	}
 
-requestAccessToken(harvestOptions).then(function(res){
-	FB.setAccessToken(res.access_token);
-	harvestPost(harvestOptions);
-});
+	FBharvest.prototype.getPostsForGroup = function(groupId, offset)
+	{
+		var group = groupId || harvestOptions.groupid;
+
+		var url = '/' + group + '/feed';
+
+		if(offset)
+		{
+			url = url + '?limit=1&offset=' + offset;
+		}
+
+		return getFBData(url);
+	}
+
+	FBharvest.prototype.getComment = function(postId, offset) {
+		var url;
+		console.log(postId, offset);
+		if(!postId)
+			throw 'No post id given. Cannot load comments.';
+
+		if(offset){
+			url = '/' + postId + '/comments?limit=1&order=chronological&offset=' + offset;
+		}
+		else{
+			url = '/' + postId + '/comments?limit=1&order=chronological';
+		}
+		
+		return getFBData(url);
+	};
+
+    module.exports = FBharvest;
