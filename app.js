@@ -61,7 +61,7 @@ app.get('/ratecomment', function (req, res) {
     var harvest = new FBharvest();
   	var trainer = new MLtrainer();
 
-  	textToClassify = harvest.getCommentsForPost(req.query.post_id, req.query.comment_offset).then(function(resolve){
+  	var textToClassify = harvest.getCommentsForPost(req.query.post_id, req.query.comment_offset).then(function(resolve){
 	  console.log('before trained' + resolve.data[0].message);  	  
 	  trainer.trainByExample(resolve.data[0].message, req.query.classification);
 	  console.log('trained');
@@ -83,6 +83,12 @@ res.redirect('/getcomment');
   });
 });
 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 app.get('/train', function(req, res){
 	var MLtrainer = require('./trainer.js');
   	var trainer = new MLtrainer();
@@ -100,13 +106,19 @@ app.get('/qualify', function(req, res){
   	var trainer = new MLtrainer();
 
   	var text = decodeURI(req.query.text);
-
-  	trainer.classify(text).then(function(result){
+  	var textPieces = text.split(';');
+  	
+  	if(textPieces.length > 1){
+  		console.log(trainer.classifyArray(textPieces));
+  		res.send();
+  	}
+	
+  /*	trainer.classify(text).then(function(result){
   		res.send({result: result});
-  	})
+  	})*/
 });
 
 
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!');
+app.listen(process.env.PORT, function () {
+  console.log('App listening on port 80!');
 });

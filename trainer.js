@@ -36,6 +36,23 @@
 		    // the classifier is saved to the classifier.json file!
 		});
   	};
+  	
+  	var test = function(text, resultCollection){
+  		classify(text).then(function(result){
+  			  			console.log('classified');
+  			resultCollection.push(result);
+  		});
+  	};
+  	
+  	MLtrainer.prototype.classifyArray = function(texts)
+  	{
+  		results = [];
+  		for(var i = texts; i<texts.length; i++){
+  			test(text[i], results);
+  		}
+  		console.log('after');
+  		return results;
+  	}
 
   	var getMaterialFromFile = function()
   	{
