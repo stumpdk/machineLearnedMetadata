@@ -17,39 +17,27 @@ app.get('/getcomment', function (req, res) {
     var harvest = new FBharvest();
   	var trainer = new MLtrainer();
 
-  	postOffset = req.query.post_offset || 0;
-	commentOffset = req.query.comment_offset || 0;
+	var ranOffset = Math.floor((Math.random() * 2000) + 1);
 
-    //Get post
-    harvest.getPostsForGroup()
-    //Get comments
-    .then(function(resultPost){
-    	return harvest.getCommentsForPost(resultPost.data[0].id, commentOffset).then(function(res){
-    		return {"post": resultPost, "comment": res};
-    	});
-    })
-    //Classify comment
-    .then(function(resultComment){
-		return trainer.classify(resultComment.comment.data[0].message).then(function(res){
-			resultComment.classification = res;
-			return resultComment;
-		});
-    })
+	harvest.batch(ranOffset).then(function(result){
+		return JSON.parse(result[1].body);
+	})
     //Render and display
-    .then(function(postCommentClassification){
-    	//console.log(postCommentClassification);
-    	
-    	var url = 'http://localhost:3000/ratecomment?classification=relevant&post_id=' + postCommentClassification.post.data[0].id + '&comment_id=' + postCommentClassification.comment.data[0].id + '&comment_offset=' + commentOffset + '&post_offset=' + postOffset;
-console.log('rul');
+    .then(function(postComments){
+    	console.log(postComments);
+
+    	var url = 'http://localhost:3000/ratecomment?&post_id=' + postComments.data[0].id;
+		
+
     	var templateData = {
     		title: 'rate comment',
     		message: postCommentClassification.post.data[0].message,
-    		comment: postCommentClassification.comment.data[0].message,
+    		comments: postComments.shift(),
     		imgSrc: postCommentClassification.post.data[0].picture,
     		link: postCommentClassification.post.data[0].link,
     		suggestion: postCommentClassification.classification,
-    		relevant: url + '&classification=relevant',
-    		irrelevant: url + '&classification=irrelevant'
+    		relevant: url + '&classification=relevant&comment_id=',
+    		irrelevant: url + '&classification=irrelevant&comment_id='
 		};
 
     	res.render('show_post', templateData);
@@ -59,7 +47,11 @@ console.log('rul');
 app.get('/test', function(req, res){
 	var FBharvest = require('./facebook.js');
     var harvest = new FBharvest();
-	harvest.getPostAndComments(109602915873899).then(function(result){console.log(result);});
+	harvest.batch(10).then(function(result){
+		console.log(result[1].body);
+		console.log(JSON.parse(result[1].body));
+	});
+	//harvest.getPostAndComments(109602915873899).then(function(result){console.log(result);});
 });
 
 //Get comment rating from user and get next comment and/or post
@@ -74,9 +66,10 @@ app.get('/ratecomment', function (req, res) {
 	  trainer.trainByExample(resolve.data[0].message, req.query.classification);
 	  console.log('trained');
 	  
+res.redirect('/getcomment');
 	  //There are more comments. Get them!
 	//  console.log(resolve.data);
-	  if(resolve.data.paging && resolve.data.paging.cursors.next){
+	/*  if(resolve.data.paging && resolve.data.paging.cursors.next){
 		  	harvest.getPostsForGroup(false, req.query.post_offset+1).then(function(result){
 	  				res.redirect('/getcomment?post_id=' + req.query.post_id + '&comment_id=' + result.data[0].id);
 	  		});
@@ -86,8 +79,31 @@ app.get('/ratecomment', function (req, res) {
 	  	harvest.getPostsForGroup(false, req.query.post_offset+1).then(function(result){
 	  		res.redirect('/getcomment?post_id=' + result.data[0].id);
 	  	});
-	  }
+	  }*/
   });
+});
+
+app.get('/train', function(req, res){
+	var MLtrainer = require('./trainer.js');
+  	var trainer = new MLtrainer();
+
+  	var text = decodeURI(req.query.text);
+  	var classification = req.query.classification;
+
+  	trainer.trainByExample(text,classification);
+
+  	res.send('trained');
+});
+
+app.get('/qualify', function(req, res){
+	var MLtrainer = require('./trainer.js');
+  	var trainer = new MLtrainer();
+
+  	var text = decodeURI(req.query.text);
+
+  	trainer.classify(text).then(function(result){
+  		res.send({result: result});
+  	})
 });
 
 
