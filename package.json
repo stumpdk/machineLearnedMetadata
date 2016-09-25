@@ -1,0 +1,29 @@
+{
+  "name": "mchinelearnedmetadata",
+  "version": "1.0.0",
+  "description": "This is a Hack4DK project.",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.14.0",
+    "fbgraph": "^1.3.0",
+    "csv": "^1.1.0",
+    "natural": "^0.4.0",
+    "fb": "^1.1.1",
+    "csv-parse": "^1.1.7",
+    "pug": "^2.0.0-beta6"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stumpdk/machineLearnedMetadata.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stumpdk/machineLearnedMetadata/issues"
+  },
+  "homepage": "https://github.com/stumpdk/machineLearnedMetadata#readme"
+}
